@@ -7,8 +7,6 @@ from abr import ABREnv
 import network
 import tensorflow as tf
 import network
-import rules
-import tracepool
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
