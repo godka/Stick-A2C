@@ -35,8 +35,8 @@ class Network():
             net = tflearn.fully_connected(
                 net, FEATURE_NUM, activation='relu')
                 
-            mu = tflearn.fully_connected(net, self.a_dim, activation='sigmoid')
-            sigma = tflearn.fully_connected(net, self.a_dim, activation='softplus')
+            mu = tflearn.fully_connected(net, 1, activation='sigmoid')
+            sigma = tflearn.fully_connected(net, 1, activation='softplus')
             value = tflearn.fully_connected(net, 1, activation='linear')
             return mu, sigma, value
             
@@ -98,15 +98,15 @@ class Network():
 
     def get_entropy(self, step):
         if step < 10000:
-           return 0.5
+           return 5.
         elif step < 20000:
-           return 0.3
+           return 3.
         elif step < 30000:
-           return 0.1
+           return 1.
         elif step < 35000:
-           return 0.05
+           return 0.5
         else:
-           return 0.03
+           return 0.3
 
     def train(self, s_batch, a_batch, v_batch, epoch):
         print s_batch.shape, a_batch.shape, v_batch.shape
