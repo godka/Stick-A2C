@@ -80,12 +80,12 @@ class ABREnv():
     def step(self, action):
         RESEVOIR = 0.
         CUSHION = action * 60. * 2
-        if buffer_size < RESEVOIR:
+        if self.buffer_size < RESEVOIR:
             bit_rate = 0
-        elif buffer_size >= RESEVOIR + CUSHION:
+        elif self.buffer_size >= RESEVOIR + CUSHION:
             bit_rate = A_DIM - 1
         else:
-            bit_rate = (A_DIM - 1) * (buffer_size - RESEVOIR) / float(CUSHION)
+            bit_rate = (A_DIM - 1) * (self.buffer_size - RESEVOIR) / float(CUSHION)
         bit_rate = int(bit_rate)
         # the action is from the last decision
         # this is to make the framework similar to the real
