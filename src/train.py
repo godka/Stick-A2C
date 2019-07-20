@@ -109,7 +109,10 @@ def central_agent(net_params_queues, exp_queues):
                 s += s_
                 a += a_
                 g += g_
-            actor.train(s, a, g)
+            s_batch=np.stack(s, axis=0)
+            a_batch=np.vstack(a)
+            v_batch=np.vstack(g)
+            actor.train(s_batch, a_batch, v_batch, epoch)
 
             if epoch % MODEL_SAVE_INTERVAL == 0:
                 # Save the neural net parameters to disk.

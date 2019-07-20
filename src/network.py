@@ -8,6 +8,7 @@ import tflearn
 
 FEATURE_NUM = 128
 EPS = 1e-4
+GAMMA = 0.99
 
 class Network():
     def CreateNetwork(self, inputs):
@@ -108,6 +109,7 @@ class Network():
            return 0.03
 
     def train(self, s_batch, a_batch, v_batch, epoch):
+        print s_batch.shape, a_batch.shape, v_batch.shape
         s_batch, a_batch, v_batch = tflearn.data_utils.shuffle(s_batch, a_batch, v_batch)
         self.sess.run(self.optimize, feed_dict={
             self.inputs: s_batch,
@@ -117,9 +119,11 @@ class Network():
         })
 
     def compute_v(self, s_batch, a_batch, r_batch, terminal):
-        ba_size = s_batch.shape[0]
-        v_batch = critic.predict(s_batch)
-        R_batch = np.zeros(r_batch.shape)
+        ba_size = len(s_batch)
+        v_batch = self.sess.run(self.val, feed_dict={
+            self.inputs: s_batch
+        })
+        R_batch = np.zeros([len(r_batch), 1])
 
         if terminal:
             R_batch[-1, 0] = 0  # terminal state
@@ -128,4 +132,4 @@ class Network():
         for t in reversed(range(ba_size - 1)):
             R_batch[t, 0] = r_batch[t] + GAMMA * R_batch[t + 1, 0]
 
-        return R_batch
+        return list(R_batch)
