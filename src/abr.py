@@ -78,8 +78,8 @@ class ABREnv():
         return
 
     def step(self, action):
-        RESEVOIR = 0.
-        CUSHION = action * 60. * 2
+        RESEVOIR = 3.
+        CUSHION = action
         if self.buffer_size < RESEVOIR:
             bit_rate = 0
         elif self.buffer_size >= RESEVOIR + CUSHION:

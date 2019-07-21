@@ -36,7 +36,7 @@ class Network():
                 net, FEATURE_NUM, activation='relu')
                 
             mu = tflearn.fully_connected(net, 1, activation='sigmoid')
-            sigma = tflearn.fully_connected(net, 1, activation='softplus')
+            sigma = tflearn.fully_connected(net, 1, activation='sigmoid')
             value = tflearn.fully_connected(net, 1, activation='linear')
             return mu, sigma, value
             
@@ -58,9 +58,11 @@ class Network():
         self.inputs = tf.placeholder(tf.float32, [None, self.s_dim[0], self.s_dim[1]])
         self.acts = tf.placeholder(tf.float32, [None, 1])
         self.entropy_weight = tf.placeholder(tf.float32)
-        self.mu, self.sigma, self.val = self.CreateNetwork(inputs=self.inputs)
-        self.dist = tf.distributions.Normal(self.mu, self.sigma)
-        self.real_out = self.dist.sample()
+        self.mu_, self.sigma_, self.val = self.CreateNetwork(inputs=self.inputs)
+        self.mu = tf.multiply(self.mu_, 60.)
+        self.sigma = tf.multiply(self.sigma_, 60.)
+        self.dist = tf.distributions.Normal(self.mu, self.sigma + 1e-4)
+        self.real_out = tf.clip_by_value(tf.squeeze(self.dist.sample(1), axis=0), 0., 60.)
         self.log_prob = self.dist.log_prob(self.acts)
         self.entropy = self.dist.entropy()
 
@@ -85,10 +87,10 @@ class Network():
         self.optimize = tf.train.AdamOptimizer(self.lr_rate).minimize(self.loss)
     
     def predict(self, input):
-        action = self.sess.run(self.real_out, feed_dict={
+        action, sigma = self.sess.run([self.real_out, self.sigma], feed_dict={
             self.inputs: input
         })
-        return action[0, 0]
+        return action[0, 0], sigma[0, 0]
 
     def deterministic_predict(self, input):
         action = self.sess.run(self.mu, feed_dict={
@@ -97,19 +99,21 @@ class Network():
         return action[0, 0]
 
     def get_entropy(self, step):
-        if step < 10000:
-           return 5.
-        elif step < 20000:
-           return 3.
-        elif step < 30000:
-           return 1.
-        elif step < 35000:
-           return 0.5
+        if step < 20000:
+            return 5.
+        elif step < 50000:
+            return 3.
+        elif step < 70000:
+            return 1.
+        elif step < 90000:
+            return 0.5
+        elif step < 120000:
+            return 0.3
         else:
-           return 0.3
+            return 0.1
 
     def train(self, s_batch, a_batch, v_batch, epoch):
-        print s_batch.shape, a_batch.shape, v_batch.shape
+        # print s_batch.shape, a_batch.shape, v_batch.shape
         s_batch, a_batch, v_batch = tflearn.data_utils.shuffle(s_batch, a_batch, v_batch)
         self.sess.run(self.optimize, feed_dict={
             self.inputs: s_batch,

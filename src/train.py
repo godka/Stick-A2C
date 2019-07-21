@@ -81,7 +81,7 @@ def central_agent(net_params_queues, exp_queues):
 
     assert len(net_params_queues) == NUM_AGENTS
     assert len(exp_queues) == NUM_AGENTS
-    with tf.Session() as sess, open(LOG_FILE + '_test', 'w') as test_log_file:
+    with tf.Session() as sess, open(LOG_FILE + '_test.txt', 'w') as test_log_file:
 
         actor = network.Network(sess,
                 state_dim=S_DIM, action_dim=A_DIM,
@@ -141,10 +141,10 @@ def agent(agent_id, net_params_queue, exp_queue):
             for step in range(TRAIN_SEQ_LEN):
                 s_batch.append(obs)
 
-                buffer_bound = actor.predict(
+                buffer_bound, sigma_ = actor.predict(
                     np.reshape(obs, (1, S_DIM[0], S_DIM[1])))     
                 obs, rew, done, info = env.step(buffer_bound)
-
+                
                 a_batch.append([buffer_bound])
                 r_batch.append(rew)
 

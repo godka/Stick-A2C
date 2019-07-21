@@ -69,7 +69,7 @@ def main():
         entropy_record = []
 
         video_count = 0
-
+        action = 10.
         while True:  # serve video forever
             # the action is from the last decision
             # this is to make the framework similar to the real
@@ -98,6 +98,7 @@ def main():
                            str(rebuf) + '\t' +
                            str(video_chunk_size) + '\t' +
                            str(delay) + '\t' +
+                           str(action) + '\t' + 
                            str(reward) + '\n')
             log_file.flush()
 
@@ -118,9 +119,9 @@ def main():
             state[4, :A_DIM] = np.array(next_video_chunk_sizes) / M_IN_K / M_IN_K  # mega byte
             state[5, -1] = np.minimum(video_chunk_remain, CHUNK_TIL_VIDEO_END_CAP) / float(CHUNK_TIL_VIDEO_END_CAP)
 
-            action = actor.deterministic_predict(np.reshape(state, (1, S_INFO, S_LEN)))
-            RESEVOIR = 0.
-            CUSHION = action * 60. * 2
+            action, _ = actor.predict(np.reshape(state, (1, S_INFO, S_LEN)))
+            RESEVOIR = 3.
+            CUSHION = action
             if buffer_size < RESEVOIR:
                 bit_rate = 0
             elif buffer_size >= RESEVOIR + CUSHION:
