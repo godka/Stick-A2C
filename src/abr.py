@@ -46,7 +46,7 @@ class ABREnv():
         self.net_env.randomize()
 
     def reset(self):
-        self.net_env.reset_ptr()
+        # self.net_env.reset_ptr()
         self.time_stamp = 0
         self.last_bit_rate = DEFAULT_QUALITY
         self.state = np.zeros((S_INFO, S_LEN))
