@@ -38,8 +38,6 @@ class Environment:
         # note: trace file starts with time 0
         self.mahimahi_ptr = np.random.randint(1, len(self.cooked_bw))
         self.last_mahimahi_time = self.cooked_time[self.mahimahi_ptr - 1]
-        self.mahimahi_ptr_tmp = self.mahimahi_ptr
-        self.last_mahimahi_time_tmp = self.last_mahimahi_time
 
         self.video_size = {}  # in bytes
         for bitrate in range(BITRATE_LEVELS):
@@ -48,23 +46,6 @@ class Environment:
                 for line in f:
                     self.video_size[bitrate].append(int(line.split()[0]))
 
-    def randomize(self):
-        # pick a random trace file
-        self.trace_idx = np.random.randint(len(self.all_cooked_time))
-        self.cooked_time = self.all_cooked_time[self.trace_idx]
-        self.cooked_bw = self.all_cooked_bw[self.trace_idx]
-
-        # randomize the start point of the video
-        # note: trace file starts with time 0
-        self.mahimahi_ptr = np.random.randint(1, len(self.cooked_bw))
-        self.last_mahimahi_time = self.cooked_time[self.mahimahi_ptr - 1]
-        self.mahimahi_ptr_tmp = self.mahimahi_ptr
-        self.last_mahimahi_time_tmp = self.last_mahimahi_time
-
-    def reset_ptr(self):
-        self.mahimahi_ptr = self.mahimahi_ptr_tmp
-        self.last_mahimahi_time = self.last_mahimahi_time_tmp
-        
     def get_video_chunk(self, quality):
 
         assert quality >= 0
@@ -101,11 +82,8 @@ class Environment:
             if self.mahimahi_ptr >= len(self.cooked_bw):
                 # loop back in the beginning
                 # note: trace file starts with time 0
-
                 self.mahimahi_ptr = 1
                 self.last_mahimahi_time = 0
-                # self.mahimahi_ptr = self.mahimahi_ptr_tmp
-                # self.last_mahimahi_time = self.last_mahimahi_time_tmp
 
         delay *= MILLISECONDS_IN_SECOND
         delay += LINK_RTT
@@ -163,7 +141,7 @@ class Environment:
             end_of_video = True
             self.buffer_size = 0
             self.video_chunk_counter = 0
-            
+
             # pick a random trace file
             self.trace_idx = np.random.randint(len(self.all_cooked_time))
             self.cooked_time = self.all_cooked_time[self.trace_idx]
