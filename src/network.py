@@ -6,13 +6,14 @@ import time
 os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 import tflearn
 
-FEATURE_NUM = 128
+FEATURE_NUM = 32
 EPS = 1e-4
 GAMMA = 0.99
 
 class Network():
     def CreateNetwork(self, inputs):
         with tf.variable_scope('actor'):
+
             split_0 = tflearn.fully_connected(
                 inputs[:, 0:1, -1], FEATURE_NUM, activation='relu')
             split_1 = tflearn.fully_connected(

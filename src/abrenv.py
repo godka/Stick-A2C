@@ -164,17 +164,15 @@ class Environment:
             self.buffer_size = 0
             self.video_chunk_counter = 0
             
-            self.mahimahi_ptr = self.mahimahi_ptr_tmp
-            self.last_mahimahi_time = self.last_mahimahi_time_tmp
-            # # pick a random trace file
-            # self.trace_idx = np.random.randint(len(self.all_cooked_time))
-            # self.cooked_time = self.all_cooked_time[self.trace_idx]
-            # self.cooked_bw = self.all_cooked_bw[self.trace_idx]
+            # pick a random trace file
+            self.trace_idx = np.random.randint(len(self.all_cooked_time))
+            self.cooked_time = self.all_cooked_time[self.trace_idx]
+            self.cooked_bw = self.all_cooked_bw[self.trace_idx]
 
-            # # randomize the start point of the video
-            # # note: trace file starts with time 0
-            # self.mahimahi_ptr = np.random.randint(1, len(self.cooked_bw))
-            # self.last_mahimahi_time = self.cooked_time[self.mahimahi_ptr - 1]
+            # randomize the start point of the video
+            # note: trace file starts with time 0
+            self.mahimahi_ptr = np.random.randint(1, len(self.cooked_bw))
+            self.last_mahimahi_time = self.cooked_time[self.mahimahi_ptr - 1]
 
         next_video_chunk_sizes = []
         for i in range(BITRATE_LEVELS):
