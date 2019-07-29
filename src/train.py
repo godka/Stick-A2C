@@ -11,7 +11,7 @@ import network
 os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-S_DIM = [6, 8]
+S_DIM = [7, 8]
 A_DIM = 6
 ACTOR_LR_RATE =1e-4
 CRITIC_LR_RATE = 1e-3
@@ -141,7 +141,7 @@ def agent(agent_id, net_params_queue, exp_queue):
             for step in range(TRAIN_SEQ_LEN):
                 s_batch.append(obs)
 
-                buffer_bound, sigma_ = actor.predict(
+                buffer_bound = actor.predict(
                     np.reshape(obs, (1, S_DIM[0], S_DIM[1])))     
                 obs, rew, done, info = env.step(buffer_bound)
                 

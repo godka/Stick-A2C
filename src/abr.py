@@ -5,7 +5,7 @@ import abrenv
 import load_trace
 
 # bit_rate, buffer_size, next_chunk_size, bandwidth_measurement(throughput and time), chunk_til_video_end
-S_INFO = 6
+S_INFO = 7
 S_LEN = 8  # take how many frames in the past
 A_DIM = 6
 TRAIN_SEQ_LEN = 100  # take as a train batch
@@ -38,12 +38,11 @@ class ABREnv():
         self.buffer_size = 0.
         self.state = np.zeros((S_INFO, S_LEN))
         self.reset()
+        self.mu = np.random.uniform(0., 10.) / 10.
+        self.tau = np.random.uniform(0., 10.) / 10.
 
     def seed(self, num):
         np.random.seed(num)
-
-    def reset_trace(self):
-        self.net_env.randomize()
 
     def reset(self):
         # self.net_env.reset_ptr()
@@ -51,6 +50,9 @@ class ABREnv():
         self.last_bit_rate = DEFAULT_QUALITY
         self.state = np.zeros((S_INFO, S_LEN))
         self.buffer_size = 0.
+        self.mu = np.random.uniform(0., 10.) / 10.
+        self.tau = np.random.uniform(0., 10.) / 10.
+
         bit_rate = self.last_bit_rate
         delay, sleep_time, self.buffer_size, rebuf, \
             video_chunk_size, next_video_chunk_sizes, \
@@ -69,6 +71,7 @@ class ABREnv():
             next_video_chunk_sizes) / M_IN_K / M_IN_K  # mega byte
         state[5, -1] = np.minimum(video_chunk_remain,
                                   CHUNK_TIL_VIDEO_END_CAP) / float(CHUNK_TIL_VIDEO_END_CAP)
+        state[6, :2] = np.array([self.mu, self.tau])
 
         self.state = state
         return state
@@ -99,8 +102,8 @@ class ABREnv():
 
         # reward is video quality - rebuffer penalty - smooth penalty
         reward = VIDEO_BIT_RATE[bit_rate] / M_IN_K \
-            - REBUF_PENALTY * rebuf \
-            - SMOOTH_PENALTY * np.abs(VIDEO_BIT_RATE[bit_rate] -
+            - self.mu * rebuf \
+            - self.tau * np.abs(VIDEO_BIT_RATE[bit_rate] -
                                       VIDEO_BIT_RATE[self.last_bit_rate]) / M_IN_K
 
         self.last_bit_rate = bit_rate
@@ -117,6 +120,7 @@ class ABREnv():
             next_video_chunk_sizes) / M_IN_K / M_IN_K  # mega byte
         state[5, -1] = np.minimum(video_chunk_remain,
                                   CHUNK_TIL_VIDEO_END_CAP) / float(CHUNK_TIL_VIDEO_END_CAP)
+        state[6, :2] = np.array([self.mu, self.tau])
 
         self.state = state
         #observation, reward, done, info = env.step(action)

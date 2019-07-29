@@ -6,40 +6,42 @@ import time
 os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 import tflearn
 
-FEATURE_NUM = 32
+FEATURE_NUM = 64
 EPS = 1e-4
 GAMMA = 0.99
 
 class Network():
     def CreateNetwork(self, inputs):
         with tf.variable_scope('actor'):
-
+            w_init = tf.random_normal_initializer(0., .1)
             split_0 = tflearn.fully_connected(
-                inputs[:, 0:1, -1], FEATURE_NUM, activation='relu')
+                inputs[:, 0:1, :], FEATURE_NUM, weights_init = w_init, activation='relu')
             split_1 = tflearn.fully_connected(
-                inputs[:, 1:2, -1], FEATURE_NUM, activation='relu')
+                inputs[:, 1:2, :], FEATURE_NUM, weights_init = w_init, activation='relu')
             split_2 = tflearn.conv_1d(
-                inputs[:, 2:3, :], FEATURE_NUM, 4, activation='relu')
+                inputs[:, 2:3, :], FEATURE_NUM, 4, weights_init = w_init, activation='relu')
             split_3 = tflearn.conv_1d(
-                inputs[:, 3:4, :], FEATURE_NUM, 4, activation='relu')
+                inputs[:, 3:4, :], FEATURE_NUM, 4, weights_init = w_init, activation='relu')
             split_4 = tflearn.conv_1d(
-                inputs[:, 4:5, :self.a_dim], FEATURE_NUM, 4, activation='relu')
+                inputs[:, 4:5, :self.a_dim], FEATURE_NUM, 4, weights_init = w_init, activation='relu')
             split_5 = tflearn.fully_connected(
-                inputs[:, 5:6, -1], FEATURE_NUM, activation='relu')
+                inputs[:, 5:6, :], FEATURE_NUM, weights_init = w_init, activation='relu')
+            split_6 = tflearn.fully_connected(
+                inputs[:, 6:7, :2], FEATURE_NUM, weights_init = w_init, activation='relu')
 
             split_2_flat = tflearn.flatten(split_2)
             split_3_flat = tflearn.flatten(split_3)
             split_4_flat = tflearn.flatten(split_4)
 
             net = tf.stack([split_0, split_1, split_2_flat,
-                            split_3_flat, split_4_flat, split_5], axis=1)
+                            split_3_flat, split_4_flat, split_5, split_6], axis=1)
             net = tflearn.fully_connected(
-                net, FEATURE_NUM, activation='relu')
+                net, FEATURE_NUM, weights_init = w_init, activation='relu')
                 
-            mu = tflearn.fully_connected(net, 1, activation='sigmoid')
-            sigma = tflearn.fully_connected(net, 1, activation='sigmoid')
+            mu = tflearn.fully_connected(net, 1, weights_init = w_init, activation='sigmoid')
+            sigma = tflearn.fully_connected(net, 1, weights_init = w_init, activation='sigmoid')
             
-            value = tflearn.fully_connected(net, 1, activation='linear')
+            value = tflearn.fully_connected(net, 1, weights_init = w_init, activation='linear')
             return mu, sigma, value
             
     def get_network_params(self):
@@ -63,7 +65,7 @@ class Network():
         self.mu_, self.sigma_, self.val = self.CreateNetwork(inputs=self.inputs)
         self.mu = tf.multiply(self.mu_, 60.)
         self.sigma = tf.multiply(self.sigma_, 60.)
-        self.dist = tf.distributions.Normal(self.mu, self.sigma + 1e-4)
+        self.dist = tf.distributions.Normal(self.mu, self.sigma + 1e-2)
         self.real_out = tf.clip_by_value(tf.squeeze(self.dist.sample(1), axis=0), 0., 60.)
         self.log_prob = self.dist.log_prob(self.acts)
         self.entropy = self.dist.entropy()
@@ -89,10 +91,10 @@ class Network():
         self.optimize = tf.train.AdamOptimizer(self.lr_rate).minimize(self.loss)
     
     def predict(self, input):
-        action, sigma = self.sess.run([self.real_out, self.sigma], feed_dict={
+        action = self.sess.run([self.real_out, self.sigma], feed_dict={
             self.inputs: input
         })
-        return action[0, 0], sigma[0, 0]
+        return action[0, 0]
 
     def deterministic_predict(self, input):
         action = self.sess.run(self.mu, feed_dict={
@@ -102,17 +104,17 @@ class Network():
 
     def get_entropy(self, step):
         if step < 20000:
-            return 0.5
+            return 5.
         elif step < 50000:
-            return 0.4
+            return 3.
         elif step < 70000:
-            return 0.3
+            return 1.
         elif step < 90000:
-            return 0.2
+            return 0.5
         elif step < 120000:
-            return 0.1
+            return 0.3
         else:
-            return 0.05
+            return 0.1
 
     def train(self, s_batch, a_batch, v_batch, epoch):
         # print s_batch.shape, a_batch.shape, v_batch.shape
